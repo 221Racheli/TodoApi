@@ -6,54 +6,38 @@ using TodoApi;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-// builder.Services.AddMvc();
 builder.Services.AddSingleton<Item>();
 builder.Services.AddCors();
-
-// builder.Services.AddSwaggerGen(c =>
-// {
-//     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-//     {
-//         Title = "Your API",
-//         Version = "v1",
-//     });
-// });
-
-// builder.Services.AddSwaggerGen(config =>
-//   {
-//     config.SwaggerDoc("v1", new OpenApiInfo() { Title = "Payment Card Info API", Version = "v1" });
-//   });
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<ToDoDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("ToDoDB");
-    options.UseMySql(connectionString,new MySqlServerVersion(new Version(8, 0, 0))); 
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 0)));
 });
 
 
 var app = builder.Build();
 
-// if (app.Environment.IsDevelopment())
-// {
-//     app.UseSwagger();
-//     app.UseSwaggerUI(c =>
-//     {
-//         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Your API V1");
-//     });
-// }
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-
- app.UseCors(builder => builder
- .AllowAnyOrigin()
- .AllowAnyMethod()
- .AllowAnyHeader()
+app.UseCors(builder => builder
+.AllowAnyOrigin()
+.AllowAnyMethod()
+.AllowAnyHeader()
 );
 
 app.MapGet("/", () => "welcome to your to do list!");
 
-app.MapGet("/task",(ToDoDbContext dbContext)=> dbContext.Items.ToList());
+app.MapGet("/task", (ToDoDbContext dbContext) => dbContext.Items.ToList());
 
-var AddItem=async(ToDoDbContext dbContext,[FromBody] Item item)=>{
+var AddItem = async (ToDoDbContext dbContext, [FromBody] Item item) =>
+{
     await dbContext.Items.AddAsync(item);
     await dbContext.SaveChangesAsync();
     return item;
@@ -61,7 +45,8 @@ var AddItem=async(ToDoDbContext dbContext,[FromBody] Item item)=>{
 
 app.MapPost("/task", AddItem);
 
-var UpdateAddItem=async(ToDoDbContext dbContext,[FromBody] Item item)=>{
+var UpdateAddItem = async (ToDoDbContext dbContext, [FromBody] Item item) =>
+{
     dbContext.Items.Update(item);
     await dbContext.SaveChangesAsync();
     return item;
@@ -69,8 +54,9 @@ var UpdateAddItem=async(ToDoDbContext dbContext,[FromBody] Item item)=>{
 
 app.MapPut("/task", UpdateAddItem);
 
-var DeleteItem=async(ToDoDbContext dbContext,int id)=>{
-    var item=dbContext.Items.Find(id);
+var DeleteItem = async (ToDoDbContext dbContext, int id) =>
+{
+    var item = dbContext.Items.Find(id);
     dbContext.Items.Remove(item);
     await dbContext.SaveChangesAsync();
     return item;
@@ -79,7 +65,7 @@ var DeleteItem=async(ToDoDbContext dbContext,int id)=>{
 app.MapDelete("/task/{id}", DeleteItem);
 
 
-app.MapMethods("/options-or-head", new[] { "OPTIONS", "HEAD" }, 
+app.MapMethods("/options-or-head", new[] { "OPTIONS", "HEAD" },
                           () => "This is an options or head request ");
 
 app.Run();
